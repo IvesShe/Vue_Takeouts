@@ -1740,3 +1740,118 @@ login組件不秀FooterGuide
 下方四個對應的組件才秀FooterGuide
 
 ![image](./images/20211116210440.png)
+
+# 封裝Axios模塊
+
+安裝axios
+
+```bash
+npm i axios --save
+```
+
+![image](./images/20211117204649.png)
+
+## src/api/ajax.js
+
+```js
+/**
+ * ajax請求函數模塊
+ * 返回值：promise對象
+ */
+import axios from 'axios'
+
+export default function ajax (url, data={}, type='GET') {
+
+  return new Promise(function (resolve, reject) {
+    // 執行異步ajax請求
+    let promise
+    if (type === 'GET') {
+      // 准備url query參數數據
+      let dataStr = '' // 數據拼接字符串
+      Object.keys(data).forEach(key => {
+        dataStr += key + '=' + data[key] + '&'
+      })
+      if (dataStr !== '') {
+        dataStr = dataStr.substring(0, dataStr.lastIndexOf('&'))
+        url = url + '?' + dataStr
+      }
+      // 發送get請求
+      promise = axios.get(url)
+    } else {
+      // 發送post請求
+      promise = axios.post(url, data)
+    }
+    
+    promise.then(function (response) {
+      // 成功了調用resolve()
+      resolve(response.data)
+    }).catch(function (error) {
+      // 失敗了調用reject()
+      reject(error)
+    })
+  })
+}
+```
+
+## src/api/index.js
+
+```js
+/**
+ * 包含n個接口請求函數的模塊
+ * 函數的返回值：promise對象
+ */
+
+import ajax from './ajax'
+
+const BASE_URL = '/api'
+
+//  1、根據經緯度獲取位置詳情
+export const reqAddress = (geohash) => ajax(`${BASE_URL}/position/${geohash}`)
+//  2、獲取食品分類列表
+export const reqFoodTypes = () => ajax(BASE_URL+'/index_category')
+//  3、根據經緯度獲取商舖列表
+export const reqShops = (longitude,latitude) => ajax(BASE_URL+'/shops',{longitude,latitude})
+```
+
+# 設置代理伺服器
+
+解決跨域的問題
+
+## config/index.js
+
+增加proxyTable這段
+
+```js
+module.exports = {
+  dev: {
+    proxyTable: {
+      '/api': { // 匹配所有以 '/api'開頭的請求路徑
+        target: 'http://localhost:4000', // 代理目標的基礎路徑
+        changeOrigin: true, // 支持跨域 
+        pathRewrite: {// 重寫路徑：去掉路徑中開頭的'/api'
+          '^/api': ''
+        }
+      }
+    },
+  },
+
+}
+
+```
+
+## 在App.vue使用
+
+```js
+import {reqFoodTypes} from './api'
+export default {
+
+  async mounted() {
+    const result = await reqFoodTypes()
+    console.log(result)
+  },
+}
+```
+
+## 請求成功
+
+![image](./images/20211117213058.png)

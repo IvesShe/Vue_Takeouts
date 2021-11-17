@@ -6,9 +6,16 @@
 </template>
 
 <script>
+import {reqFoodTypes} from './api'
 import FooterGuide from './components/FooterGuide/FooterGuide.vue'
 
 export default {
+
+  async mounted() {
+    const result = await reqFoodTypes()
+    console.log(result)
+  },
+
   components: {
     FooterGuide,
   }
