@@ -1855,3 +1855,199 @@ export default {
 ## 請求成功
 
 ![image](./images/20211117213058.png)
+
+# 創建Vuex整體結構
+
+安裝
+
+```bash
+npm i vuex --save
+```
+
+![image](./images/20211118203202.png)
+
+建立資料夾及對應檔案
+
+![image](./images/20211118212712.png)
+
+## /src/store/index.js
+
+```js
+/**
+ * Vuex最核心的管理對象store
+ */
+
+import Vue from 'vue'
+import Vuex from 'vuex'
+import state from './state'
+import mutations from './mutations'
+import actions from './actions'
+import getters from './getters'
+
+Vue.use(Vuex)
+
+export default new Vuex.Store({
+  state,
+  mutations,
+  actions,
+  getters
+})
+```
+
+## /src/store/state.js
+
+```js
+/**
+ * 狀態對象
+ */
+
+export default {
+  latitude: 40.168,   // 緯度
+  longitude: 116.368, // 經度
+  address: {},        // 地址相關信息對象
+  categorys: [],      // 食品分類數據
+  shops: [],          // 商家數組
+}
+```
+
+## /src/store/mutations-types.js
+
+```js
+/**
+ * 包含n個mutation的type名稱常量
+ */
+
+export const RECEIVE_ADDRESS = 'receive_address'  // 接收地址
+export const RECEIVE_CATEGORYS = 'receive_categorys'  // 接收食品分類數組
+export const RECEIVE_SHOPS = 'receive_shops'  // 接收商家數據
+```
+
+## /src/store/mutations.js
+
+```js
+/**
+ * 直接更新state的多個方法的對象
+ */
+
+import {
+  RECEIVE_ADDRESS,
+  RECEIVE_CATEGORYS,
+  RECEIVE_SHOPS,
+} from './mutation-types'
+
+export default {
+  [RECEIVE_ADDRESS] (state,{address}) {
+    state.address = address
+  },
+
+  [RECEIVE_CATEGORYS] (state,{categorys}) {
+    state.categorys = categorys
+  },
+
+  [RECEIVE_SHOPS] (state,{shops}) {
+    state.shops = shops
+  },
+}
+```
+
+## /src/store/actions.js
+
+```js
+/**
+ * 通過mutation間接更新state的多個方法的對象
+ */
+ import {
+  RECEIVE_ADDRESS,
+  RECEIVE_CATEGORYS,
+  RECEIVE_SHOPS,
+} from './mutation-types'
+
+import {
+  reqAddress,
+  reqFoodCategorys,
+  reqShops
+} from '../api'
+
+export default {
+  // 異步獲取地址
+  async getAddress ({commit,state}) {
+    // 發送異步ajax請求
+    const geohash = state.latitude + ',' + state.longitude
+    const result = await reqAddress(geohash)
+    // 提交一個mutation
+    if(result.code === 0){
+      const address = result.data
+      commit(RECEIVE_ADDRESS,{address})
+    }
+  },
+
+  // 異步獲取食品分類列表
+  async getCategorys ({commit}) {
+    // 發送異步ajax請求
+    const result = await reqFoodCategorys()
+    // 提交一個mutation
+    if(result.code === 0){
+      const categorys = result.data
+      commit(RECEIVE_CATEGORYS,{categorys})
+    }
+  },
+
+  // 異步獲取商家列表
+  async getShops ({commit,state}) {
+    // 發送異步ajax請求
+    const {longitude,latitude} = state
+    const result = await reqShops(longitude,latitude)
+    // 提交一個mutation
+    if(result.code === 0){
+      const shops = result.data
+      commit(RECEIVE_SHOPS,{shops})
+    }
+  },
+
+}
+```
+
+## /src/store/getters.js
+
+```js
+/**
+ * 包含多個基於state的getter計算屬性的對象
+ */
+
+export default {
+  
+}
+```
+
+## 在main.js使用
+
+```js
+import Vue from 'vue'
+import App from './App'
+import router from './router'
+import store from './store'
+
+Vue.config.productionTip = false
+
+/* eslint-disable no-new */
+new Vue({
+  el: '#app',  
+  render: h=>h(App),
+  router,   // 使用上vue-router
+  store     // 使用上vuex
+})
+```
+
+## 在App.vue掛載時dispatch
+
+```js
+mounted() {
+    this.$store.dispatch('getAddress')
+  },
+```
+
+## 運行專案
+
+vuex成功運行並存入數據
+
+![image](./images/20211118212643.png)
