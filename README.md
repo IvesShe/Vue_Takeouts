@@ -6,6 +6,14 @@
 
 ![image](./images/20211114120701.png)
 
+# 完成影片
+
+待補
+
+# 使用技術
+
+Vue、VueX、vue-router
+
 # 建立新專案
 
 ```bash
