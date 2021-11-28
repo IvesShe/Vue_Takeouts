@@ -17,10 +17,11 @@ export default {
     // console.log(result)
     //this.$store.dispatch('getAddress ')
     this.getAddress()
+    this.getUserInfo()
   },
 
   methods: {
-    ...mapActions(['getAddress'])
+    ...mapActions(['getAddress','getUserInfo'])
   },
 
   components: {

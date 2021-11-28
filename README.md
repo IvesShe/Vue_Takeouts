@@ -2059,3 +2059,818 @@ mounted() {
 vuex成功運行並存入數據
 
 ![image](./images/20211118212643.png)
+
+# 使用後端數據
+
+HeaderTop、MSite、ShopList使用後端數據、抽取Star組件、新增讀取時的暫時圖
+
+## App.vue
+
+```js
+<template>
+  <div id="app">
+    <router-view></router-view>
+    <FooterGuide v-show="$route.meta.showFooter" />
+  </div>
+</template>
+
+<script>
+//import {reqFoodTypes} from './api'
+import {mapActions} from 'vuex'
+import FooterGuide from './components/FooterGuide/FooterGuide.vue'
+
+export default {
+
+  mounted() {
+    // const result = await reqFoodTypes()
+    // console.log(result)
+    //this.$store.dispatch('getAddress ')
+    this.getAddress()
+  },
+
+  methods: {
+    ...mapActions(['getAddress'])
+  },
+
+  components: {
+    FooterGuide,
+  }
+}
+</script>
+```
+
+## HeaderTop組件
+
+```js
+<template>
+  <!--首頁頭部-->
+  <header class="header">
+      <slot name="left"></slot>
+      <span class="header_title">
+      <span class="header_title_text ellipsis">{{title}}</span>
+      </span>
+      <slot name="right"></slot>
+  </header>
+</template>
+
+<script>
+
+export default {    
+    props: {
+        title: String
+    },
+}
+</script>
+```
+
+## MSite組件
+
+讀取後端數據，並新增讀取時的暫時圖
+
+```js
+<template>
+  <section class="msite">
+    <!--首頁頭部-->
+    <header-top :title="address.name">
+      <span class="header_search" slot="left">
+        <i class="iconfont icon-sousuo"></i>
+      </span>
+      <span class="header_login" slot="right">
+        <span class="header_login_text">登入|註冊</span>
+      </span>
+    </header-top>
+    
+    <!--首頁導航-->
+    <nav class="msite_nav">
+      <div class="swiper-container" v-if="categorys.length">
+        <div class="swiper-wrapper">
+          <div class="swiper-slide" v-for="(categorys,index) in categorysArr" :key=index>
+            <a href="javascript:" class="link_to_food" v-for="(category,index) in categorys" :key=index>
+              <div class="food_container">
+                <img :src="baseImageUrl+category.image_url">
+              </div>
+              <span>{{category.title}}</span>
+            </a>            
+          </div>
+        </div>
+        <!-- Add Pagination -->
+        <div class="swiper-pagination"></div>
+      </div>
+      <img src="./images/msite_back.svg" alt="back" v-else>
+    </nav>
+    <!--首頁附近商家-->
+    <div class="msite_shop_list">
+      <div class="shop_header">
+        <i class="iconfont icon-xuanxiang"></i>
+        <span class="shop_header_title">附近商家</span>
+      </div>
+      <shop-list></shop-list>
+    </div>
+  </section>
+</template>
+
+<script>
+import {mapState} from 'vuex'
+import Swiper from 'swiper'
+import 'swiper/dist/css/swiper.min.css'
+
+import HeaderTop from '../../components/HeaderTop/HeaderTop.vue'
+import ShopList from '../../components/ShopList/ShopList.vue'
+
+export default {
+
+  data(){
+    return {
+      baseImageUrl: 'https://fuss10.elemecdn.com'
+    }
+  },
+
+  mounted() {
+
+    this.$store.dispatch('getCategorys')
+    this.$store.dispatch('getShops')
+    
+  },
+
+  computed: {
+    ...mapState(['address','categorys']),
+
+    // 根據categorys一維數組生成一個2維數組
+    // 小數組中的元素個數最大是8
+    categorysArr() {
+      const {categorys} = this
+      // 准備空的2維數組
+      const arr = []
+      // 准備一個小數組(最大長度為8)
+      let minArr = []
+      // 遍歷categorys
+      categorys.forEach(c => {
+        // 如果當前小數組已經滿了，創建一個新的
+        if(minArr.length === 8){
+          minArr = []
+        }
+
+        // 如果minArr是空的，將小數組保存到大數組中
+        if(minArr.length === 0){
+          arr.push(minArr)
+        }        
+
+        // 將當前分類保存到小數組中
+        minArr.push(c)        
+      })
+
+      return arr
+    }
+  },
+
+  watch: {
+    categorys(value) {
+      // 界面更新就立即創建Swiper對象
+      this.$nextTick(()=>{
+        // 創建一個Swiper實例對象，來實現輪播
+        new Swiper ('.swiper-container', {
+          loop: true, // 循环模式选项
+          
+          // 如果需要分页器
+          pagination: {
+            el: '.swiper-pagination',
+          }
+        }) 
+      })       
+    }
+  },
+
+  components:{
+    HeaderTop,
+    ShopList
+  } 
+}
+</script>
+```
+
+## ShopList組件
+
+```js
+<template>
+  <div class="shop_container">
+    <ul class="shop_list" v-if="shops.length">
+      <li class="shop_li border-1px" v-for="(shop, index) in shops" :key="index">
+      <a>
+          <div class="shop_left">
+          <!-- <img class="shop_img" :src="baseImageUrl+fileSubName"> -->
+          <img class="shop_img" src="./images/shop/1.jpg">
+          </div>
+          <div class="shop_right">
+          <section class="shop_detail_header">
+              <h4 class="shop_title ellipsis">{{shop.name}}</h4>
+              <ul class="shop_detail_ul">
+                <li class="supports" v-for="(support, index) in shop.supports" :key="index">
+                  {{support.icon_name}}
+                </li>
+              </ul>
+          </section>
+          <section class="shop_rating_order">
+              <section class="shop_rating_order_left">    
+              <Star :score="shop.rating" :size="24" />          
+              <div class="rating_section">
+                  {{shop.rating}}
+              </div>
+              <div class="order_section">
+                  {{shop.recent_order_num}}
+              </div>
+              </section>
+              <section class="shop_rating_order_right">
+              <span class="delivery_style delivery_right">{{shop.delivery_mode.text}}</span>
+              </section>
+          </section>
+          <section class="shop_distance">
+              <p class="shop_delivery_msg">
+              <span>¥{{shop.float_minimum_order_amount}}起送</span>
+              <span class="segmentation">/</span>
+              <span>配送费约¥{{shop.float_delivery_fee}}</span>
+              </p>
+          </section>
+          </div>
+      </a>
+      </li>
+    </ul>
+    <ul v-else>
+      <li v-for="item in 6" >
+        <img src="./images/shop_back.svg" alt="back">
+      </li>
+    </ul>
+  </div>    
+</template>
+
+<script>
+import {mapState} from 'vuex'
+import Star from '../Star/Star.vue'
+
+export default {
+    data(){
+      return {
+        //baseImageUrl: 'http://cangdu.org:8001/img/'
+        baseImageUrl: './images/shop/',
+        fileSubName: '1.jpg'
+        // ./images/shop/1.jpg
+      }
+    },
+
+    computed: {
+      ...mapState(['shops'])
+    },
+
+    components: {
+      Star
+    } 
+    
+}
+</script>
+```
+
+## Star組件
+
+```js
+<template>
+  <div class="star" :class="'star-'+size" >
+    <span class="star-item" v-for="(sc, index) in starClasses" :class="sc" :key="index" ></span>
+  </div>
+</template>
+
+<script>
+const CLASS_ON = 'on'
+const CLASS_HALF = 'half'
+const CLASS_OFF = 'off'
+export default {  
+  props: {
+    score: Number,
+    size: Number 
+  },
+
+  computed: {
+    starClasses() {
+      const {score} = this
+      const scs = []
+      // 向scs中添加n個"CLASS_ON"
+      const scoreInteger = Math.floor(score)
+      for (let i = 0; i < scoreInteger; i++) {
+        scs.push(CLASS_ON)        
+      }
+
+      // 向scs中添加0/1個"CLASS_HALF"
+      if(score*10-scoreInteger*10>=5){
+        scs.push(CLASS_HALF)
+      }
+
+      // 向scs中添加n個"CLASS_OFF"
+      while(scs.length<5){
+        scs.push(CLASS_OFF)
+      }
+      return scs
+    }
+  }
+}
+</script>
+
+<style lang="stylus" rel="stylesheet/stylus">
+  @import "../../common/stylus/mixins.stylus"
+  .star //2x图 3x图
+    float left
+    font-size 0
+    .star-item
+      display inline-block
+      background-repeat no-repeat
+    &.star-48
+      .star-item
+        width 20px
+        height 20px
+        margin-right 22px
+        background-size 20px 20px
+        &:last-child
+          margin-right: 0
+        &.on
+          bg-image('./images/stars/star48_on')
+        &.half
+          bg-image('./images/stars/star48_half')
+        &.off
+          bg-image('./images/stars/star48_off')
+    &.star-36
+      .star-item
+        width 15px
+        height 15px
+        margin-right 6px
+        background-size 15px 15px
+        &:last-child
+          margin-right 0
+        &.on
+          bg-image('./images/stars/star36_on')
+        &.half
+          bg-image('./images/stars/star36_half')
+        &.off
+          bg-image('./images/stars/star36_off')
+    &.star-24
+      .star-item
+        width 10px
+        height 10px
+        margin-right 3px
+        background-size 10px 10px
+        &:last-child
+          margin-right 0
+        &.on
+          bg-image('./images/stars/star24_on')
+        &.half
+          bg-image('./images/stars/star24_half')
+        &.off
+          bg-image('./images/stars/star24_off')
+</style>
+```
+
+# Login功能
+
+
+## Login
+
+```js
+<template>
+  <section class="loginContainer">
+    <div class="loginInner">
+      <div class="login_header">
+        <h2 class="login_logo">7-11外賣</h2>
+        <div class="login_header_title">
+          <a href="javascript:;" :class="{on: loginWay}" @click="loginWay=true">簡訊登入</a>
+          <a href="javascript:;" :class="{on: !loginWay}" @click="loginWay=false">密碼登入</a>
+        </div>
+      </div>
+      <div class="login_content">
+        <form @submit.prevent="login">
+          <div :class="{on: loginWay}">
+            <section class="login_message">
+              <input type="tel" maxlength="11" placeholder="手機號" v-model="phone">
+              <button :disabled="!rightPhone" class="get_verification"
+                      :class="{right_phone: rightPhone}" @click.prevent="getCode">
+                {{computeTime>0 ? `已發送(${computeTime}s)` : '獲取驗證碼'}}
+              </button>
+            </section>
+            <section class="login_verification">
+              <input type="tel" maxlength="8" placeholder="驗證碼" v-model="code">
+            </section>
+            <section class="login_hint">
+              溫馨提示：未註冊7-11外賣帳號的手機號，登入時將自動註冊，且代表已同意
+              <a href="javascript:;">《用戶服務協議》</a>
+            </section>
+          </div>
+          <div :class="{on: !loginWay}">
+            <section>
+              <section class="login_message">
+                <input type="text" maxlength="11" placeholder="手機/郵箱/用戶名" v-model="name">
+              </section>
+              <section class="login_verification">
+                <input type="text" maxlength="8" placeholder="密碼" v-if="showPwd" v-model="pwd">
+                <input type="password" maxlength="8" placeholder="密碼" v-else v-model="pwd">
+                <div class="switch_button" :class="showPwd?'on':'off'" @click="showPwd=!showPwd">
+                  <div class="switch_circle" :class="{right: showPwd}"></div>
+                  <span class="switch_text">{{showPwd ? 'abc' : '...'}}</span>
+                </div>
+              </section>
+              <section class="login_message">
+                <input type="text" maxlength="11" placeholder="驗證碼" v-model="captcha">
+                <img class="get_verification" src="http://localhost:4000/captcha" alt="captcha"
+                  @click="getCaptcha" ref="captcha">
+              </section>
+            </section>
+          </div>
+          <button class="login_submit">登入</button>
+        </form>
+        <a href="javascript:;" class="about_us">關於我們</a>
+      </div>
+      <a href="javascript:" class="go_back" @click="$router.back()">
+        <i class="iconfont icon-jiantou2"></i>
+      </a>
+    </div>
+
+    <AlertTip :alertText="alertText" v-show="alertShow" @closeTip="closeTip"/>
+  </section>
+</template>
+
+<script>
+import AlertTip from '../../components/AlertTip/AlertTip.vue'
+import {reqSendCode, reqSmsLogin, reqPwdLogin} from '../../api'
+export default {
+    data() {
+      return {
+        loginWay: true,   // true:短信登入，false:密碼登入
+        computeTime: 0,   // 計時的時間
+        showPwd: false,   // 是否顯示密碼
+        phone: '',        // 手機號
+        code: '',         // 短信驗證碼
+        name: '',         // 用戶名
+        pwd: '',          // 密碼
+        captcha: '',      // 圖形驗證碼
+        alertText: '',    // 提示文本
+        alertShow: false, // 是否顯示警告框
+        intervalId: null, // 
+      }
+    }, 
+
+    computed: {
+      rightPhone() {
+        //return /^1\d{10}$/.test(this.phone)
+        return /^0\d{9}$/.test(this.phone)
+      }
+    },
+
+    methods: {
+      // 異步獲取短信驗證碼
+      async getCode() {
+        // 啟動倒計時
+        if(!this.computeTime){
+          this.computeTime = 30
+          this.intervalId = setInterval(()=>{
+            this.computeTime--
+            if(this.computeTime<=0){
+              // 停止計時
+              clearInterval(this.intervalId)
+            }
+          },1000)
+
+          // 發送ajax請求(向指定手機號發送驗證碼短信)
+          const result = await reqSendCode(this.phone)
+          if(result.code === 1){
+            // 顯示提示
+            this.showAlert(result.msg)
+            // 停止計時
+            if(this.computeTime) {
+              this.computeTime = 0
+              clearInterval(this.intervalId)
+              this.intervalId = null
+            }
+          }
+        }        
+      },
+
+      showAlert(alertText) {
+        this.alertShow = true
+        this.alertText = alertText
+      },
+
+      // 異步登入
+      async login() {
+        let result
+        // 前台表單驗證
+        if(this.loginWay) { // 短信登入
+          const {rightPhone, phone, code} = this  
+          if(!rightPhone) {
+            this.showAlert('手機號不正確')
+          }else if(!/^\d{6}$/.test(code)) {
+            // 驗證碼必須是6位數字
+            this.showAlert('驗證碼必須是6位數字')
+          }
+          // 發送ajax請求短信登入
+          result = await reqSmsLogin(phone, code)
+        }else { // 密碼登入
+          const {name, pwd, captcha} = this
+          if(!name) { 
+            // 用戶名必須指定
+            this.showAlert('用戶名必須指定')
+          }else if(!pwd) {
+            // 密碼必須指定
+            this.showAlert('密碼必須指定')
+          }else if(!captcha) {
+            // 驗證碼必須指定
+            this.showAlert('驗證碼必須指定')
+          }
+          // 發送ajax請求密碼登入
+          result = await reqPwdLogin({name, pwd, captcha})          
+        }
+
+        // 停止計時
+        if(this.computeTime) {
+          this.computeTime = 0
+          clearInterval(this.intervalId)
+          this.intervalId = null
+        }
+            
+        // 根據結果數據處理
+        if(result.code===0) {
+          const user = result.data
+          // 將user保存到vuex的state
+          this.$store.dispatch('recordUser', user)
+          // 去個人中心界面
+          this.$router.replace('/profile')
+        }else {
+          // 顯示新的圖片驗證碼
+          this.getCaptcha()
+
+          // 顯示警告提示
+          const msg = result.msg          
+          this.showAlert(msg)
+        }
+      },
+
+      // 關閉警告框
+      closeTip() {
+        this.alertShow = false
+        this.alertText = ''
+      },
+
+      // 獲取一個新的圖片驗證碼
+      getCaptcha(event) {
+        // 每次指定的src要不一樣 
+        //event.target.src = 'http://localhost:4000/captcha?time='+Date.now()
+        this.$refs.captcha.src = 'http://localhost:4000/captcha?time='+Date.now()
+      }
+    },
+
+    components: {
+      AlertTip
+    }
+}
+</script>
+```
+
+## MSite修改
+
+```js
+    <header-top :title="address.name">
+      <router-link class="header_search" slot="left" to="/search">
+        <i class="iconfont icon-sousuo"></i>
+      </router-link>
+      <router-link class="header_login" slot="right" :to="userInfo._id ? '/userinfo':'/login'">
+        <span class="header_login_text" v-if="!userInfo._id">
+          登入|註冊
+        </span>
+        <span class="header_login_text" v-else>
+          <i class="iconfont icon-person"></i>
+        </span>        
+      </router-link>
+    </header-top>
+
+     computed: {
+      ...mapState(['address','categorys','userInfo']),
+     }
+```
+
+## Profile修改
+
+```js
+    <section class="profile-number">
+      <router-link :to="userInfo._id ? '/userinfo':'/login'" class="profile-link">
+        <div class="profile_image">
+          <i class="iconfont icon-person"></i>
+        </div>
+        <div class="user-info">
+          <p class="user-info-top" v-if="!userInfo.phone">{{userInfo.name || "登入/註冊"}}</p>
+          <p>
+            <span class="user-icon">
+              <i class="iconfont icon-shouji icon-mobile"></i>
+            </span>
+            <span class="icon-mobile-number">{{userInfo.phone || '暫無綁定手機號'}}</span>
+          </p>
+        </div>
+        <span class="arrow">
+          <i class="iconfont icon-jiantou1"></i>
+        </span>
+      </router-link>
+    </section>
+    <script>
+    import {mapState} from 'vuex'
+    import {MessageBox, Toast} from 'mint-ui'
+    import HeaderTop from '../../components/HeaderTop/HeaderTop.vue'
+    export default {
+      components:{
+        HeaderTop
+      },
+
+      methods: {
+        logout() {
+          MessageBox.confirm('確定退出嗎?').then(
+            action => {
+              console.log("點擊了確認")
+              this.$store.dispatch('logout')
+              Toast('登出完成')
+            },
+            action => {
+              console.log("點擊了取消")
+            },
+          );
+        }
+      },
+
+      computed: {
+        ...mapState(['userInfo'])
+      }
+    }
+    </script>
+```
+
+## 對應Vuex撰寫
+
+### state.js
+
+```js
+/**
+ * 狀態對象
+ */
+
+export default {
+  userInfo: {},           // 用戶信息
+}
+```
+
+### mutation-types.js
+
+```js
+export const RECEIVE_USER_INFO = 'receive_user_info'  // 接收用戶信息
+export const RESET_USER_INFO = 'reset_user_info'      // 重置用戶信息
+```
+
+### mutations.js
+
+```js
+import {
+  RECEIVE_USER_INFO,
+  RESET_USER_INFO,
+} from './mutation-types'
+
+export default {
+  [RECEIVE_USER_INFO] (state,{userInfo}) {
+    state.userInfo = userInfo
+  },
+
+  [RESET_USER_INFO] (state) {
+    state.userInfo = {}
+  },
+}
+```
+
+### action.js
+
+```js
+/**
+ * 通過mutation間接更新state的多個方法的對象
+ */
+ import {
+  RECEIVE_USER_INFO,
+  RESET_USER_INFO,
+} from './mutation-types'
+
+import {
+  reqUserInfo,
+  reqLogout,
+} from '../api'
+
+export default {
+  // 同步記錄用戶信息
+  recordUser({commit}, userInfo){
+    commit(RECEIVE_USER_INFO,{userInfo})
+  },
+
+  // 異步獲取用戶信息
+  async getUserInfo({commit}) {
+    const result = await reqUserInfo()
+    if(result.code === 0){
+      const userInfo = result.data
+      commit(RECEIVE_USER_INFO,{userInfo})
+    }
+  },
+
+  // 異步登出
+  async logout({commit}) {
+    const result = await reqLogout()
+    if(result.code === 0){
+      commit(RESET_USER_INFO)
+    }
+  }
+}
+```
+
+# 安裝mint-ui
+
+```bash
+npm i mint-ui --save
+```
+
+![image](./images/20211128192442.png)
+
+https://mint-ui.github.io/docs/#/en2/message-box
+
+![image](./images/20211128194500.png)
+
+# 實現按需打包
+
+```bash
+npm i babel-plugin-component --save-dev
+```
+
+![image](./images/20211128192637.png)
+
+## babelrc
+
+修改設定檔
+
+```js
+{
+  "presets": [
+    ["env", {
+      "modules": false,
+      "targets": {
+        "browsers": ["> 1%", "last 2 versions", "not ie <= 8"]
+      }
+    }],
+    "stage-2"
+  ],
+  "plugins": ["transform-vue-jsx", "transform-runtime", ["component", [
+    {
+      "libraryName": "mint-ui",
+      "style": true
+    }
+  ]]]
+}
+```
+
+## 註冊全局組件
+
+main.js
+
+```js
+import {Button} from 'mint-ui'
+
+// 註冊全局組件標籤
+Vue.component(Button.name, Button)  // <mt-button></mt-button>
+```
+
+## 登入功能完成畫面
+
+未登入
+
+![image](./images/20211128200553.png)
+
+短信登入
+
+![image](./images/20211128200604.png)
+
+![image](./images/20211128200626.png)
+
+![image](./images/20211128200645.png)
+
+登出
+
+![image](./images/20211128200652.png)
+
+![image](./images/20211128200701.png)
+
+
+
+密碼登入
+
+![image](./images/20211128201039.png)
+
+![image](./images/20211128201030.png)
+
+![image](./images/20211128201044.png)
+
+MSite畫面(上方左右元件)
+
+![image](./images/20211128201156.png)
+
+![image](./images/20211128201208.png)

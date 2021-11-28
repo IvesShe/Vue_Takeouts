@@ -2,12 +2,17 @@
   <section class="msite">
     <!--首頁頭部-->
     <header-top :title="address.name">
-      <span class="header_search" slot="left">
+      <router-link class="header_search" slot="left" to="/search">
         <i class="iconfont icon-sousuo"></i>
-      </span>
-      <span class="header_login" slot="right">
-        <span class="header_login_text">登入|註冊</span>
-      </span>
+      </router-link>
+      <router-link class="header_login" slot="right" :to="userInfo._id ? '/userinfo':'/login'">
+        <span class="header_login_text" v-if="!userInfo._id">
+          登入|註冊
+        </span>
+        <span class="header_login_text" v-else>
+          <i class="iconfont icon-person"></i>
+        </span>        
+      </router-link>
     </header-top>
     
     <!--首頁導航-->
@@ -63,7 +68,7 @@ export default {
   },
 
   computed: {
-    ...mapState(['address','categorys']),
+    ...mapState(['address','categorys','userInfo']),
 
     // 根據categorys一維數組生成一個2維數組
     // 小數組中的元素個數最大是8
