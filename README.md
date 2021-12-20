@@ -2,17 +2,102 @@
 
 移動版外賣平台
 
-(開發中)
-
 ![image](./images/20211114120701.png)
-
-# 完成影片
-
-待補
 
 # 使用技術
 
-Vue、VueX、vue-router
+- Vue2
+- Vuex
+- vue-router
+- mint-ui
+- axios
+- stylus
+- vue-lazyload
+- mock
+- better-scroll
+- date-fns
+
+# 頁面展示
+
+首頁
+
+![image](./images/20211220095912.png)
+
+搜尋頁
+
+![image](./images/20211220095920.png)
+
+訂單頁
+
+![image](./images/20211220095925.png)
+
+我的
+
+![image](./images/20211220095931.png)
+
+簡訊登入頁
+
+![image](./images/20211220095944.png)
+
+帳號、密碼登入頁
+
+![image](./images/20211220095952.png)
+
+取得驗證碼，倒數
+
+![image](./images/20211220100011.png)
+
+輸入驗證碼
+
+![image](./images/20211220100021.png)
+
+登入
+
+![image](./images/20211220100027.png)
+
+登出提示
+
+![image](./images/20211220100037.png)
+
+帳號、密碼、驗證碼 登入
+
+![image](./images/20211220100055.png)
+
+google跳提示
+
+![image](./images/20211220100103.png)
+
+登入成功(名稱區顯示與手機登入不同)
+
+![image](./images/20211220100111.png)
+
+點餐頁
+
+![image](./images/20211220100212.png)
+
+點擊餐點彈出頁
+
+![image](./images/20211220100217.png)
+
+加入購物車
+
+![image](./images/20211220100227.png)
+
+購物車頁面
+
+![image](./images/20211220100237.png)
+
+商家信息彈出頁
+
+![image](./images/20211220100246.png)
+
+評價頁
+
+![image](./images/20211220100256.png)
+
+商家頁
+
+![image](./images/20211220100301.png)
 
 # 建立新專案
 
@@ -2874,3 +2959,197 @@ MSite畫面(上方左右元件)
 ![image](./images/20211128201156.png)
 
 ![image](./images/20211128201208.png)
+
+# 安裝Mock.js
+
+```
+npm i mockjs --save
+```
+
+![image](./images/20211129211351.png)
+
+![image](./images/20211129211342.png)
+
+# Better-Scroll
+
+https://github.com/ustbhuangyi/better-scroll
+
+https://ustbhuangyi.github.io/better-scroll/#/
+
+## 安裝
+
+```bash
+npm i better-scroll --save
+```
+
+## 使用
+
+```js
+import BScroll from 'better-scroll'
+
+export default {  
+  mounted() {
+    this.$store.dispatch('getShopGoods', ()=>{
+      this.$nextTick(()=>{  // 列表數據更新顯示後執行
+        // 列表顯示之後創建
+        new BScroll('.menu-wrapper', {
+          scrollY: true,
+          click: true
+        })
+
+        const foodsScroll = new BScroll('.foods-wrapper', {
+          // scrollY: true,
+          // click: true,
+          probeType: 1
+        })
+
+        // 給右側列表綁定scroll監聽
+        foodsScroll.on('scroll', ({x,y})=>{
+          console.log(x,y)
+        })
+
+      })
+    })    
+  },
+}
+```
+
+# 滾輪筆記
+
+## 新增測試區
+
+```html
+<div class="test">
+  <ul>
+    li{分類列表$}*100
+  </ul>
+</div>
+```
+
+# better-scroll橫向
+
+https://better-scroll.github.io/docs/zh-CN/guide/base-scroll.html#%E4%B8%8A%E6%89%8B
+
+```html
+<template>
+  <div class="horizontal-container">
+    <div class="scroll-wrapper" ref="scroll">
+      <div class="scroll-content">
+        <div class="scroll-item" v-for="(item, index) in emojis" :key="index">{{item}}</div>
+      </div>
+    </div>
+  </div>
+</template>
+```
+
+```js
+<script type="text/ecmascript-6">
+  import BScroll from '@better-scroll/core'
+
+  export default {
+    data () {
+      return {
+        emojis: [
+          '👉🏼 😁 😂 🤣 👈🏼',
+          '😄 😅 😆 😉 😊',
+          '😫 😴 😌 😛 😜',
+          '👆🏻 😒 😓 😔 👇🏻',
+          '😑 😶 🙄 😏 😣',
+          '😞 😟 😤 😢 😭',
+          '🤑 😲 ☹️ 🙁 😖',
+          '👍 👎 👊 ✊ 🤛',
+          '☝️ ✋ 🤚 🖐 🖖',
+          '👍🏼 👎🏼 👊🏼 ✊🏼 🤛🏼',
+          '☝🏽 ✋🏽 🤚🏽 🖐🏽 🖖🏽',
+          '🌖 🌗 🌘 🌑 🌒'
+        ]
+      }
+    },
+    mounted() {
+      this.init()
+    },
+    beforeDestroy() {
+      this.bs.destroy()
+    },
+    methods: {
+      init() {
+        this.bs = new BScroll(this.$refs.scroll, {
+          scrollX: true,
+          probeType: 3 // listening scroll event
+        })
+        this.bs.on('scrollStart', () => {
+          console.log('scrollStart-')
+        })
+        this.bs.on('scroll', ({ y }) => {
+          console.log('scrolling-')
+        })
+        this.bs.on('scrollEnd', () => {
+          console.log('scrollingEnd')
+        })
+      }
+    }
+  }
+</script>
+
+```
+
+```css
+<style lang="stylus" rel="stylesheet/stylus" scoped>
+
+.horizontal-container
+  .scroll-wrapper
+    position relative
+    width 90%
+    margin 80px auto
+    white-space nowrap
+    border 3px solid #42b983
+    border-radius 5px
+    overflow hidden
+    .scroll-content
+      display inline-block
+    .scroll-item
+      height 50px
+      line-height 50px
+      font-size 24px
+      display inline-block
+      text-align center
+      padding 0 10px
+</style>
+
+```
+
+# vue-lazyload
+
+安裝
+
+```bash
+ npm i vue-lazyload --save
+```
+
+# 動態gif網站
+
+https://loading.io/asset/536357
+
+# moment.js
+
+安裝
+
+```js
+npm i moment --save
+```
+
+# 打包
+
+啟動打包可視化
+
+```bash
+npm run build --report
+```
+
+# date-fns
+
+取代moment的小庫
+
+```
+npm i date-fns --save
+```
